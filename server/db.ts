@@ -47,12 +47,18 @@ export async function runAutoMigration() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         phone VARCHAR(20) NOT NULL,
+        email VARCHAR(200) NOT NULL DEFAULT '',
         trip_days trip_days NOT NULL DEFAULT '3d2n',
         trip_date VARCHAR(20),
         group_size INTEGER NOT NULL DEFAULT 2,
         total_amount INTEGER NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
+    `);
+
+    // Add email column if it doesn't exist (for existing tables)
+    await db.execute(sql`
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email VARCHAR(200) NOT NULL DEFAULT '';
     `);
 
     _migrated = true;

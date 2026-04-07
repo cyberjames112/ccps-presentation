@@ -16,6 +16,7 @@ export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
+  email: varchar("email", { length: 200 }).notNull(),
   tripDays: tripDaysEnum("trip_days").default("3d2n").notNull(),
   tripDate: varchar("trip_date", { length: 20 }),
   groupSize: integer("group_size").default(2).notNull(),

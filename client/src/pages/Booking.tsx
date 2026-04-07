@@ -10,6 +10,7 @@ import {
   Users,
   Calendar,
   Phone,
+  Mail,
   User,
   Clock,
   AlertTriangle,
@@ -42,6 +43,7 @@ export default function Booking() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [days, setDays] = useState<DayOption>("3d2n");
   const [date] = useState("4/30(五)-5/4(二)");
   const [adults, setAdults] = useState(2);
@@ -63,12 +65,13 @@ export default function Booking() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || isSubmitting) return;
+    if (!name || !phone || !email || isSubmitting) return;
     setIsSubmitting(true);
     try {
       await createBooking.mutateAsync({
         name,
         phone,
+        email,
         tripDays: days,
         tripDate: date || undefined,
         groupSize: adults + children,
@@ -195,10 +198,10 @@ export default function Booking() {
               <CheckCircle2 className="w-9 h-9 md:w-11 md:h-11 text-[#1a8a7d]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-black text-[#1a8a7d]">
-              報名資料已送出
+              已收到您的請求
             </h2>
             <p className="mt-3 text-gray-600 text-sm md:text-base leading-relaxed">
-              感謝您的報名！請加入我們的 LINE 好友，以便專人為您安排後續行程。
+              將為您發送行程表到您的Email，點擊下方加入LINE好友，馬上與專屬顧問聊聊行程需求
             </p>
 
             <div className="mt-6 bg-gray-50 rounded-xl p-5 text-left space-y-2.5">
@@ -209,6 +212,10 @@ export default function Booking() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">電話</span>
                 <span className="font-bold text-gray-800">{phone}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Email</span>
+                <span className="font-bold text-gray-800">{email}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">行程</span>
@@ -326,6 +333,22 @@ export default function Booking() {
                 />
               </div>
 
+              {/* Email */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
+                  <Mail className="w-4 h-4 text-[#1a8a7d]" />
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="請輸入您的 Email"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none transition-all text-sm md:text-base"
+                />
+              </div>
+
               {/* Days */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
@@ -417,10 +440,10 @@ export default function Booking() {
               <div className="lg:hidden pt-2">
                 <button
                   type="submit"
-                  disabled={!name || !phone || isSubmitting}
+                  disabled={!name || !phone || !email || isSubmitting}
                   className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {isSubmitting ? "送出中..." : "確認報名"}
+                  {isSubmitting ? "送出中..." : "瞭解行程"}
                 </button>
               </div>
             </motion.form>
@@ -492,10 +515,10 @@ export default function Booking() {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      disabled={!name || !phone || isSubmitting}
+                      disabled={!name || !phone || !email || isSubmitting}
                       className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
-                      {isSubmitting ? "送出中..." : "確認報名"}
+                      {isSubmitting ? "送出中..." : "瞭解行程"}
                     </button>
                   </div>
                 </div>

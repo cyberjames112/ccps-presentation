@@ -10,6 +10,7 @@ export const appRouter = router({
         z.object({
           name: z.string().min(1, "姓名為必填"),
           phone: z.string().min(1, "電話為必填"),
+          email: z.string().email("請輸入有效的 Email"),
           tripDays: z.enum(["3d2n", "4d3n"]),
           tripDate: z.string().optional(),
           groupSize: z.number().int().min(1).max(20),
@@ -20,6 +21,7 @@ export const appRouter = router({
         await createBooking({
           name: input.name,
           phone: input.phone,
+          email: input.email,
           tripDays: input.tripDays,
           tripDate: input.tripDate ?? null,
           groupSize: input.groupSize,
@@ -30,6 +32,7 @@ export const appRouter = router({
         sendBookingNotification({
           name: input.name,
           phone: input.phone,
+          email: input.email,
           tripDays: input.tripDays,
           tripDate: input.tripDate ?? null,
           groupSize: input.groupSize,
