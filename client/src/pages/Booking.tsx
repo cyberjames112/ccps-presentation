@@ -45,7 +45,7 @@ export default function Booking() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [days, setDays] = useState<DayOption>("3d2n");
-  const [date] = useState("4/30(五)-5/4(二)");
+  const [date] = useState("4/29(四)-5/3(一)");
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -223,7 +223,7 @@ export default function Booking() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">出團日期</span>
-                <span className="font-bold text-gray-800">4/30(五) － 5/4(二)</span>
+                <span className="font-bold text-gray-800">4/29(四) － 5/3(一)</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">成人人數</span>
@@ -370,7 +370,7 @@ export default function Booking() {
                   出團日期
                 </label>
                 <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
-                  4/30(五) － 5/4(二)
+                  4/29(四) － 5/3(一)
                 </div>
               </div>
 
