@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
-  ArrowLeft,
   Plane,
   Hotel,
   Car,
@@ -267,14 +266,7 @@ export default function Booking() {
       <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] via-white to-[#fdf8ed]">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
-          <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-[#1a8a7d] font-bold text-sm hover:opacity-80 transition-opacity"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden md:inline">返回簡報</span>
-            </Link>
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-center">
             <img
               src={LOGO_URL}
               alt="CCPS 家慶佳業"
