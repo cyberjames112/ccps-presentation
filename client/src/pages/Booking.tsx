@@ -23,7 +23,7 @@ import {
 const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663123178525/fDCYNs6656b7JMsC7bMdFf/logo_ec5529c5.png";
 
-const BASE_PRICE = 19900;
+const BASE_PRICE = 30000;
 const EXTRA_FEE = 5000;
 const LINE_URL = "https://line.me/ti/p/~0936669147";
 
@@ -45,7 +45,7 @@ export default function Booking() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [days, setDays] = useState<DayOption>("3d2n");
-  const [date, setDate] = useState("");
+  const [date] = useState("4/30(五)-5/4(二)");
   const [companions, setCompanions] = useState(2);
   const [submitted, setSubmitted] = useState(false);
   const [showLinePrompt, setShowLinePrompt] = useState(false);
@@ -57,7 +57,6 @@ export default function Booking() {
   const pricing = useMemo(() => {
     const totalPeople = companions;
     const isSolo = totalPeople === 1;
-    const isFourDay = days === "4d3n";
 
     let pricePerPerson = BASE_PRICE;
     const extras: string[] = [];
@@ -66,15 +65,11 @@ export default function Booking() {
       pricePerPerson += EXTRA_FEE;
       extras.push("單人成行 +NT$5,000");
     }
-    if (isFourDay) {
-      pricePerPerson += EXTRA_FEE;
-      extras.push("四天三夜 +NT$5,000");
-    }
 
     const totalPrice = pricePerPerson * totalPeople;
 
     return { pricePerPerson, totalPrice, totalPeople, extras };
-  }, [days, companions]);
+  }, [companions]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +95,7 @@ export default function Booking() {
     }
   };
 
-  const daysLabel = days === "3d2n" ? "三天兩夜" : "四天三夜";
+  const daysLabel = "五天四夜";
 
   const handleLineClick = () => {
     setShowLinePrompt(true);
@@ -231,8 +226,8 @@ export default function Booking() {
                 <span className="font-bold text-gray-800">{daysLabel}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">預計出團日期</span>
-                <span className="font-bold text-gray-800">{date || "待確認"}</span>
+                <span className="text-gray-500">出團日期</span>
+                <span className="font-bold text-gray-800">4/30(五) － 5/4(二)</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">同行人數</span>
@@ -353,37 +348,13 @@ export default function Booking() {
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Clock className="w-4 h-4 text-[#1a8a7d]" />
-                  預計出團天數 <span className="text-red-500">*</span>
+                  行程方案
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setDays("3d2n")}
-                    className={`px-4 py-3 rounded-xl border-2 font-bold text-sm md:text-base transition-all ${
-                      days === "3d2n"
-                        ? "border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    三天兩夜
-                    <span className="block text-xs font-normal mt-0.5 opacity-70">
-                      基本方案
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDays("4d3n")}
-                    className={`px-4 py-3 rounded-xl border-2 font-bold text-sm md:text-base transition-all ${
-                      days === "4d3n"
-                        ? "border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    四天三夜
-                    <span className="block text-xs font-normal mt-0.5 opacity-70">
-                      每位 +NT$5,000
-                    </span>
-                  </button>
+                <div className="px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]">
+                  <p className="font-bold text-sm md:text-base">精選超值行程五天四夜</p>
+                  <p className="text-xs font-normal mt-0.5 opacity-70">
+                    吉隆坡導覽＋國際學校參觀＋建案參觀
+                  </p>
                 </div>
               </div>
 
@@ -391,14 +362,11 @@ export default function Booking() {
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Calendar className="w-4 h-4 text-[#1a8a7d]" />
-                  預計出團日期
+                  出團日期
                 </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none transition-all text-sm md:text-base"
-                />
+                <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
+                  4/30(五) － 5/4(二)
+                </div>
               </div>
 
               {/* Companions */}
