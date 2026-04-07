@@ -15,7 +15,6 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  Info,
   X,
   MessageCircle,
 } from "lucide-react";
@@ -23,8 +22,8 @@ import {
 const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663123178525/fDCYNs6656b7JMsC7bMdFf/logo_ec5529c5.png";
 
-const BASE_PRICE = 30000;
-const EXTRA_FEE = 5000;
+const ADULT_PRICE = 30000;
+const CHILD_PRICE = 20000;
 const LINE_URL = "https://line.me/ti/p/~0936669147";
 
 const includes = [
@@ -46,7 +45,8 @@ export default function Booking() {
   const [phone, setPhone] = useState("");
   const [days, setDays] = useState<DayOption>("3d2n");
   const [date] = useState("4/30(五)-5/4(二)");
-  const [companions, setCompanions] = useState(2);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [showLinePrompt, setShowLinePrompt] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,21 +55,12 @@ export default function Booking() {
 
   // Price calculation
   const pricing = useMemo(() => {
-    const totalPeople = companions;
-    const isSolo = totalPeople === 1;
-
-    let pricePerPerson = BASE_PRICE;
-    const extras: string[] = [];
-
-    if (isSolo) {
-      pricePerPerson += EXTRA_FEE;
-      extras.push("單人成行 +NT$5,000");
-    }
-
-    const totalPrice = pricePerPerson * totalPeople;
-
-    return { pricePerPerson, totalPrice, totalPeople, extras };
-  }, [companions]);
+    const totalPeople = adults + children;
+    const adultTotal = adults * ADULT_PRICE;
+    const childTotal = children * CHILD_PRICE;
+    const totalPrice = adultTotal + childTotal;
+    return { adultTotal, childTotal, totalPrice, totalPeople };
+  }, [adults, children]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +73,7 @@ export default function Booking() {
         phone,
         tripDays: days,
         tripDate: date || undefined,
-        groupSize: companions,
+        groupSize: adults + children,
         totalAmount: pricing.totalPrice,
       });
       setSubmitted(true);
@@ -230,9 +221,15 @@ export default function Booking() {
                 <span className="font-bold text-gray-800">4/30(五) － 5/4(二)</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">同行人數</span>
-                <span className="font-bold text-gray-800">{companions} 人</span>
+                <span className="text-gray-500">成人人數</span>
+                <span className="font-bold text-gray-800">{adults} 人</span>
               </div>
+              {children > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">兒童人數（未滿11歲）</span>
+                  <span className="font-bold text-gray-800">{children} 人</span>
+                </div>
+              )}
               <div className="border-t border-gray-200 pt-2.5 mt-2.5 flex justify-between">
                 <span className="text-gray-700 font-bold">預估總金額</span>
                 <span className="font-black text-[#d4a843] text-lg">
@@ -369,40 +366,66 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Companions */}
+              {/* Adults */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#1a8a7d]" />
-                  同行人數 <span className="text-red-500">*</span>
+                  成人人數 <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT$30,000</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => setCompanions(Math.max(1, companions - 1))}
+                    onClick={() => setAdults(Math.max(1, adults - 1))}
                     className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center text-xl font-bold text-gray-600 hover:border-[#1a8a7d] hover:text-[#1a8a7d] transition-all"
                   >
                     −
                   </button>
                   <div className="flex-1 text-center">
                     <span className="text-3xl md:text-4xl font-black text-[#1a8a7d]">
-                      {companions}
+                      {adults}
                     </span>
                     <span className="text-sm text-gray-500 ml-1">人</span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setCompanions(Math.min(20, companions + 1))}
+                    onClick={() => setAdults(Math.min(20, adults + 1))}
                     className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center text-xl font-bold text-gray-600 hover:border-[#1a8a7d] hover:text-[#1a8a7d] transition-all"
                   >
                     +
                   </button>
                 </div>
-                {companions === 1 && (
-                  <p className="mt-2 text-xs text-amber-600 flex items-center gap-1">
-                    <Info className="w-3.5 h-3.5" />
-                    單人成行每位加收 NT$5,000
-                  </p>
-                )}
+              </div>
+
+              {/* Children */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
+                  <Users className="w-4 h-4 text-[#d4a843]" />
+                  未滿11歲兒童人數
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT$20,000</span>
+                </label>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setChildren(Math.max(0, children - 1))}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center text-xl font-bold text-gray-600 hover:border-[#1a8a7d] hover:text-[#1a8a7d] transition-all"
+                  >
+                    −
+                  </button>
+                  <div className="flex-1 text-center">
+                    <span className="text-3xl md:text-4xl font-black text-[#d4a843]">
+                      {children}
+                    </span>
+                    <span className="text-sm text-gray-500 ml-1">人</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setChildren(Math.min(20, children + 1))}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center text-xl font-bold text-gray-600 hover:border-[#1a8a7d] hover:text-[#1a8a7d] transition-all"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {/* Submit (mobile only, desktop has it in sidebar) */}
@@ -431,36 +454,43 @@ export default function Booking() {
                     <h3 className="text-white font-bold text-sm">費用明細</h3>
                   </div>
                   <div className="p-5 space-y-3">
+                    {/* Adult pricing */}
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">基本費用（每位）</span>
+                      <span className="text-gray-500">成人（每位）</span>
                       <span className="font-bold">
-                        NT${BASE_PRICE.toLocaleString()}
+                        NT${ADULT_PRICE.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">成人人數</span>
+                      <span className="font-bold">× {adults} 人</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
+                      <span className="text-gray-600 font-medium">成人小計</span>
+                      <span className="font-bold">
+                        NT${pricing.adultTotal.toLocaleString()}
                       </span>
                     </div>
 
-                    {pricing.extras.map((extra, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-amber-600">{extra}</span>
-                        <span className="font-bold text-amber-600">
-                          +NT${EXTRA_FEE.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-
-                    <div className="border-t border-gray-100 pt-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">每位費用</span>
-                        <span className="font-bold">
-                          NT${pricing.pricePerPerson.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-gray-500">人數</span>
-                        <span className="font-bold">
-                          × {pricing.totalPeople} 人
-                        </span>
-                      </div>
+                    {/* Child pricing */}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">兒童（未滿11歲，每位）</span>
+                      <span className="font-bold">
+                        NT${CHILD_PRICE.toLocaleString()}
+                      </span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">兒童人數</span>
+                      <span className="font-bold">× {children} 人</span>
+                    </div>
+                    {children > 0 && (
+                      <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
+                        <span className="text-gray-600 font-medium">兒童小計</span>
+                        <span className="font-bold">
+                          NT${pricing.childTotal.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="border-t-2 border-[#1a8a7d]/20 pt-3">
                       <div className="flex justify-between items-baseline">
