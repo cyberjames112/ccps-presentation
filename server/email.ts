@@ -145,7 +145,7 @@ export async function sendBookingNotification(
 
   try {
     const { error } = await resend.emails.send({
-      from: "CCPS 家慶佳業 <jamespai@ccpsmy.com>",
+      from: "CCPS 家慶佳業 <jamespai@mail.ccpsmy.com>",
       to: [NOTIFICATION_EMAIL],
       subject: `【新報名】${data.name} - ${tripLabel} ${data.groupSize}人 ${totalFormatted}`,
       html: buildEmailHtml(data),
