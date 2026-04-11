@@ -1,9 +1,86 @@
 import { publicProcedure, router } from "./_core/trpc";
-import { createBooking, getBookings } from "./db";
+import { createBooking, getBookings, createTripTemplate, listTripTemplates, getTripTemplateBySlug, updateTripTemplate, deleteTripTemplate } from "./db";
 import { sendBookingNotification } from "./email";
 import { z } from "zod";
 
+// Helper: generate slug like "20260429-001"
+function generateSlug(tripDate: string): string {
+  // Extract date digits from tripDate (e.g. "4/29(四)-5/3(一)" → "20260429")
+  const match = tripDate.match(/(\d{1,2})\/(\d{1,2})/);
+  if (match) {
+    const month = match[1].padStart(2, "0");
+    const day = match[2].padStart(2, "0");
+    const year = new Date().getFullYear();
+    const dateStr = `${year}${month}${day}`;
+    const rand = Math.random().toString(36).substring(2, 6);
+    return `${dateStr}-${rand}`;
+  }
+  // Fallback: timestamp-based
+  return `${Date.now().toString(36)}`;
+}
+
 export const appRouter = router({
+  tripTemplate: router({
+    create: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1, "方案名稱為必填"),
+          description: z.string().optional(),
+          tripDate: z.string().min(1, "出團日期為必填"),
+          adultPrice: z.number().int().min(0),
+          childPrice: z.number().int().min(0),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const slug = generateSlug(input.tripDate);
+        const template = await createTripTemplate({
+          slug,
+          name: input.name,
+          description: input.description ?? null,
+          tripDate: input.tripDate,
+          adultPrice: input.adultPrice,
+          childPrice: input.childPrice,
+        });
+        return template;
+      }),
+
+    list: publicProcedure.query(async () => {
+      return listTripTemplates();
+    }),
+
+    getBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const template = await getTripTemplateBySlug(input.slug);
+        if (!template) throw new Error("方案不存在");
+        return template;
+      }),
+
+    update: publicProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().min(1).optional(),
+          description: z.string().optional(),
+          tripDate: z.string().optional(),
+          adultPrice: z.number().int().min(0).optional(),
+          childPrice: z.number().int().min(0).optional(),
+          active: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return updateTripTemplate(id, data);
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteTripTemplate(input.id);
+        return { success: true };
+      }),
+  }),
+
   booking: router({
     create: publicProcedure
       .input(
@@ -15,6 +92,7 @@ export const appRouter = router({
           tripDate: z.string().optional(),
           groupSize: z.number().int().min(1).max(20),
           totalAmount: z.number().int().min(0),
+          templateSlug: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {

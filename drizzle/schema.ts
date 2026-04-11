@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   pgEnum,
   pgTable,
@@ -26,3 +27,19 @@ export const bookings = pgTable("bookings", {
 
 export type Booking = typeof bookings.$inferSelect;
 export type InsertBooking = typeof bookings.$inferInsert;
+
+// 行程方案模板
+export const tripTemplates = pgTable("trip_templates", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 50 }).notNull().unique(), // e.g. "20260429-001"
+  name: varchar("name", { length: 200 }).notNull(), // 方案名稱
+  description: text("description"), // 方案描述
+  tripDate: varchar("trip_date", { length: 50 }).notNull(), // 出團日期顯示文字
+  adultPrice: integer("adult_price").notNull(), // 成人價格
+  childPrice: integer("child_price").notNull(), // 兒童價格
+  active: boolean("active").default(true).notNull(), // 是否啟用
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TripTemplate = typeof tripTemplates.$inferSelect;
+export type InsertTripTemplate = typeof tripTemplates.$inferInsert;

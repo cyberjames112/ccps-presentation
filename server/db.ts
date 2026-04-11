@@ -1,7 +1,7 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { InsertBooking, bookings } from "../drizzle/schema";
+import { InsertBooking, bookings, tripTemplates, InsertTripTemplate, TripTemplate } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _migrated = false;
@@ -61,8 +61,28 @@ export async function runAutoMigration() {
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS email VARCHAR(200) NOT NULL DEFAULT '';
     `);
 
+    // Add template_slug column to bookings (link booking to a trip template)
+    await db.execute(sql`
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS template_slug VARCHAR(50) DEFAULT NULL;
+    `);
+
+    // Create trip_templates table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS trip_templates (
+        id SERIAL PRIMARY KEY,
+        slug VARCHAR(50) NOT NULL UNIQUE,
+        name VARCHAR(200) NOT NULL,
+        description TEXT,
+        trip_date VARCHAR(50) NOT NULL,
+        adult_price INTEGER NOT NULL,
+        child_price INTEGER NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+
     _migrated = true;
-    console.log("[Database] Auto-migration completed: bookings table ready");
+    console.log("[Database] Auto-migration completed: bookings + trip_templates tables ready");
   } catch (error) {
     console.error("[Database] Auto-migration failed:", error);
   }
@@ -79,4 +99,39 @@ export async function getBookings() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db.select().from(bookings).orderBy(desc(bookings.createdAt));
+}
+
+// ---- Trip Templates CRUD ----
+
+export async function createTripTemplate(template: InsertTripTemplate) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(tripTemplates).values(template).returning();
+  return result[0];
+}
+
+export async function listTripTemplates() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.select().from(tripTemplates).orderBy(desc(tripTemplates.createdAt));
+}
+
+export async function getTripTemplateBySlug(slug: string): Promise<TripTemplate | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const results = await db.select().from(tripTemplates).where(eq(tripTemplates.slug, slug)).limit(1);
+  return results[0];
+}
+
+export async function updateTripTemplate(id: number, data: Partial<InsertTripTemplate>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.update(tripTemplates).set(data).where(eq(tripTemplates.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteTripTemplate(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(tripTemplates).where(eq(tripTemplates.id, id));
 }
