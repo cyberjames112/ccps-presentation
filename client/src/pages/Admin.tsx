@@ -212,10 +212,8 @@ export default function Admin() {
   const [customName, setCustomName] = useState("");
   const [descMode, setDescMode] = useState<"standard" | "custom">("standard");
   const [customDesc, setCustomDesc] = useState("");
-  const [dateMode, setDateMode] = useState<"preset" | "custom">("preset");
+  const [dateMode, setDateMode] = useState<"preset" | "userPick">("preset");
   const [tripDate, setTripDate] = useState("");
-  const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null);
-  const [tripDays, setTripDays] = useState(5); // default 5 days
   const [adultPrice, setAdultPrice] = useState(30000);
   const [childPrice, setChildPrice] = useState(20000);
   const [adultPrice4d, setAdultPrice4d] = useState(25000);
@@ -224,12 +222,11 @@ export default function Admin() {
 
   const isStandard = nameMode === "standard";
   const showDaySelector = descMode === "standard";
+  const isCustomDate = dateMode === "userPick";
 
   const finalName = isStandard ? "標準方案" : customName;
   const finalDesc = showDaySelector ? "標準模式" : customDesc;
-  const finalTripDate = dateMode === "custom" && selectedCalDate
-    ? formatDateRange(selectedCalDate, tripDays)
-    : tripDate;
+  const finalTripDate = isCustomDate ? "由使用者選擇" : tripDate;
 
   const resetForm = () => {
     setNameMode("standard");
@@ -238,8 +235,6 @@ export default function Admin() {
     setCustomDesc("");
     setDateMode("preset");
     setTripDate("");
-    setSelectedCalDate(null);
-    setTripDays(5);
     setAdultPrice(30000);
     setChildPrice(20000);
     setAdultPrice4d(25000);
@@ -256,6 +251,7 @@ export default function Admin() {
       tripDate: finalTripDate,
       isStandard,
       showDaySelector,
+      customDate: isCustomDate,
       adultPrice,
       childPrice,
       adultPrice4d: showDaySelector ? adultPrice4d : undefined,
@@ -287,9 +283,7 @@ export default function Admin() {
     [templates]
   );
 
-  const handleCalDateSelect = (d: Date) => {
-    setSelectedCalDate(d);
-  };
+  // Calendar date references removed — calendar is now on the booking page
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -422,19 +416,19 @@ export default function Admin() {
                         : "border-gray-200 text-gray-500 hover:border-gray-300"
                     }`}
                   >
-                    直接輸入
+                    固定日期
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDateMode("custom")}
+                    onClick={() => setDateMode("userPick")}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${
-                      dateMode === "custom"
+                      dateMode === "userPick"
                         ? "border-[#1a8a7d] bg-[#1a8a7d]/10 text-[#1a8a7d]"
                         : "border-gray-200 text-gray-500 hover:border-gray-300"
                     }`}
                   >
                     <CalendarIcon className="w-3.5 h-3.5" />
-                    自訂日期
+                    自訂（由使用者選擇）
                   </button>
                 </div>
                 {dateMode === "preset" && (
@@ -446,35 +440,9 @@ export default function Admin() {
                     className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
                   />
                 )}
-                {dateMode === "custom" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <label className="text-xs font-bold text-gray-500">行程天數：</label>
-                      {[3, 4, 5, 6, 7].map((d) => (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => setTripDays(d)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                            tripDays === d
-                              ? "border-[#1a8a7d] bg-[#1a8a7d] text-white"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300"
-                          }`}
-                        >
-                          {d}天
-                        </button>
-                      ))}
-                    </div>
-                    <MiniCalendar
-                      selectedDate={selectedCalDate}
-                      onSelectDate={handleCalDateSelect}
-                      highlightedDates={highlightedDates}
-                    />
-                    {selectedCalDate && (
-                      <div className="px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-700 font-medium">
-                        已選擇：{formatDateRange(selectedCalDate, tripDays)}
-                      </div>
-                    )}
+                {dateMode === "userPick" && (
+                  <div className="px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-700 font-medium">
+                    報名頁面將顯示月曆，由使用者自行選擇出發日期
                   </div>
                 )}
               </div>
@@ -630,6 +598,11 @@ export default function Admin() {
                     {t.showDaySelector && (
                       <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">
                         天數選擇
+                      </span>
+                    )}
+                    {t.customDate && (
+                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-bold">
+                        使用者選日期
                       </span>
                     )}
                     {!t.active && (

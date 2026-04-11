@@ -17,6 +17,8 @@ import {
   X,
   MessageCircle,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const LOGO_URL =
@@ -31,6 +33,125 @@ const includes = [
   { icon: Car, text: "吉隆坡導覽全程專車接送" },
 ];
 
+// ── Booking Calendar Component ──
+function BookingCalendar({
+  selectedDate,
+  onSelectDate,
+}: {
+  selectedDate: Date | null;
+  onSelectDate: (d: Date) => void;
+}) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(firstDayOfWeek).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    week.push(d);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  }
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null);
+    weeks.push(week);
+  }
+
+  const isSelected = (day: number) => {
+    if (!selectedDate) return false;
+    return (
+      selectedDate.getFullYear() === year &&
+      selectedDate.getMonth() === month &&
+      selectedDate.getDate() === day
+    );
+  };
+
+  const isPast = (day: number) => {
+    const d = new Date(year, month, day);
+    return d < today;
+  };
+
+  const isToday = (day: number) => {
+    return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+  };
+
+  const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+  const monthLabel = `${year} 年 ${month + 1} 月`;
+
+  return (
+    <div className="bg-white border-2 border-[#1a8a7d]/20 rounded-xl p-4 select-none">
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={() => setViewMonth(new Date(year, month - 1, 1))}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        </button>
+        <span className="text-sm font-bold text-gray-800">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={() => setViewMonth(new Date(year, month + 1, 1))}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {weekDays.map((d) => (
+          <div key={d} className="text-center text-xs font-bold text-gray-400 py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {weeks.flat().map((day, i) => {
+          if (day === null) return <div key={i} />;
+          const sel = isSelected(day);
+          const past = isPast(day);
+          const todayMark = isToday(day);
+
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={past}
+              onClick={() => onSelectDate(new Date(year, month, day))}
+              className={`w-full aspect-square rounded-lg text-sm font-bold flex items-center justify-center transition-all
+                ${sel ? "bg-[#1a8a7d] text-white shadow-md" : ""}
+                ${!sel && todayMark ? "bg-[#1a8a7d]/10 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
+                ${!sel && !todayMark && !past ? "text-gray-700 hover:bg-[#1a8a7d]/5 hover:text-[#1a8a7d]" : ""}
+                ${past ? "text-gray-300 cursor-not-allowed" : "cursor-pointer"}
+              `}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Helper: format selected date ──
+function formatSelectedDate(d: Date): string {
+  const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
+}
+
 export default function DynamicBooking({ slug }: { slug: string }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -42,6 +163,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [days, setDays] = useState<"3d2n" | "4d3n">("3d2n");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -82,14 +204,18 @@ export default function DynamicBooking({ slug }: { slug: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !email || isSubmitting || !template) return;
+    if (template.customDate && !selectedDate) return; // must pick a date
     setIsSubmitting(true);
+    const tripDateStr = template.customDate && selectedDate
+      ? formatSelectedDate(selectedDate)
+      : template.tripDate;
     try {
       await createBooking.mutateAsync({
         name,
         phone,
         email,
         tripDays: days,
-        tripDate: template.tripDate,
+        tripDate: tripDateStr,
         groupSize: adults + children,
         totalAmount: pricing.totalPrice,
         templateSlug: slug,
@@ -270,7 +396,11 @@ export default function DynamicBooking({ slug }: { slug: string }) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">出團日期</span>
-                <span className="font-bold text-gray-800">{template.tripDate}</span>
+                <span className="font-bold text-gray-800">
+                  {template.customDate && selectedDate
+                    ? formatSelectedDate(selectedDate)
+                    : template.tripDate}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">成人人數</span>
@@ -456,11 +586,25 @@ export default function DynamicBooking({ slug }: { slug: string }) {
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Calendar className="w-4 h-4 text-[#1a8a7d]" />
-                  出團日期
+                  出團日期 {template.customDate && <span className="text-red-500">*</span>}
                 </label>
-                <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
-                  {template.tripDate}
-                </div>
+                {template.customDate ? (
+                  <div className="space-y-2">
+                    <BookingCalendar
+                      selectedDate={selectedDate}
+                      onSelectDate={setSelectedDate}
+                    />
+                    {selectedDate && (
+                      <div className="px-4 py-2.5 rounded-xl bg-[#1a8a7d]/5 border-2 border-[#1a8a7d] text-[#1a8a7d] font-bold text-sm md:text-base">
+                        已選擇：{formatSelectedDate(selectedDate)}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
+                    {template.tripDate}
+                  </div>
+                )}
               </div>
 
               {/* Adults */}
@@ -529,7 +673,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
               <div className="lg:hidden pt-2">
                 <button
                   type="submit"
-                  disabled={!name || !phone || !email || isSubmitting}
+                  disabled={!name || !phone || !email || isSubmitting || (template?.customDate && !selectedDate)}
                   className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? "送出中..." : "瞭解行程"}
@@ -600,7 +744,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      disabled={!name || !phone || !email || isSubmitting}
+                      disabled={!name || !phone || !email || isSubmitting || (template?.customDate && !selectedDate)}
                       className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {isSubmitting ? "送出中..." : "瞭解行程"}

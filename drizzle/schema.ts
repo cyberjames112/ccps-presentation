@@ -37,6 +37,7 @@ export const tripTemplates = pgTable("trip_templates", {
   tripDate: varchar("trip_date", { length: 50 }).notNull(), // 出團日期顯示文字
   isStandard: boolean("is_standard").default(false).notNull(), // 標準方案（顯示特殊標題）
   showDaySelector: boolean("show_day_selector").default(false).notNull(), // 標準模式（顯示天數選擇）
+  customDate: boolean("custom_date").default(false).notNull(), // 由使用者自選出發日期
   adultPrice: integer("adult_price").notNull(), // 成人價格（或3天2夜價格）
   childPrice: integer("child_price").notNull(), // 兒童價格（或3天2夜價格）
   adultPrice4d: integer("adult_price_4d"), // 4天3夜成人價格

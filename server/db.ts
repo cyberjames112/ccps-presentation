@@ -76,6 +76,7 @@ export async function runAutoMigration() {
         trip_date VARCHAR(50) NOT NULL,
         is_standard BOOLEAN NOT NULL DEFAULT false,
         show_day_selector BOOLEAN NOT NULL DEFAULT false,
+        custom_date BOOLEAN NOT NULL DEFAULT false,
         adult_price INTEGER NOT NULL,
         child_price INTEGER NOT NULL,
         adult_price_4d INTEGER,
@@ -97,6 +98,9 @@ export async function runAutoMigration() {
     `);
     await db.execute(sql`
       ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS child_price_4d INTEGER;
+    `);
+    await db.execute(sql`
+      ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS custom_date BOOLEAN NOT NULL DEFAULT false;
     `);
 
     _migrated = true;
