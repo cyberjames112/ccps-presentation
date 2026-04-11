@@ -37,9 +37,11 @@ const includes = [
 function BookingCalendar({
   selectedDate,
   onSelectDate,
+  tripDays = 1,
 }: {
   selectedDate: Date | null;
   onSelectDate: (d: Date) => void;
+  tripDays?: number;
 }) {
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
@@ -68,13 +70,29 @@ function BookingCalendar({
     weeks.push(week);
   }
 
-  const isSelected = (day: number) => {
+  // Build a set of timestamps for the trip range (selectedDate ~ selectedDate + tripDays-1)
+  const rangeSet = useMemo(() => {
+    const s = new Set<string>();
+    if (!selectedDate || tripDays <= 0) return s;
+    for (let i = 0; i < tripDays; i++) {
+      const d = new Date(selectedDate);
+      d.setDate(d.getDate() + i);
+      s.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+    return s;
+  }, [selectedDate, tripDays]);
+
+  const isStart = (day: number) => {
     if (!selectedDate) return false;
     return (
       selectedDate.getFullYear() === year &&
       selectedDate.getMonth() === month &&
       selectedDate.getDate() === day
     );
+  };
+
+  const isInRange = (day: number) => {
+    return rangeSet.has(`${year}-${month}-${day}`);
   };
 
   const isPast = (day: number) => {
@@ -120,7 +138,8 @@ function BookingCalendar({
       <div className="grid grid-cols-7 gap-1">
         {weeks.flat().map((day, i) => {
           if (day === null) return <div key={i} />;
-          const sel = isSelected(day);
+          const start = isStart(day);
+          const inRange = !start && isInRange(day);
           const past = isPast(day);
           const todayMark = isToday(day);
 
@@ -131,9 +150,10 @@ function BookingCalendar({
               disabled={past}
               onClick={() => onSelectDate(new Date(year, month, day))}
               className={`w-full aspect-square rounded-lg text-sm font-bold flex items-center justify-center transition-all
-                ${sel ? "bg-[#1a8a7d] text-white shadow-md" : ""}
-                ${!sel && todayMark ? "bg-[#1a8a7d]/10 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
-                ${!sel && !todayMark && !past ? "text-gray-700 hover:bg-[#1a8a7d]/5 hover:text-[#1a8a7d]" : ""}
+                ${start ? "bg-[#1a8a7d] text-white shadow-md" : ""}
+                ${inRange ? "bg-[#1a8a7d]/20 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
+                ${!start && !inRange && todayMark ? "bg-[#1a8a7d]/10 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
+                ${!start && !inRange && !todayMark && !past ? "text-gray-700 hover:bg-[#1a8a7d]/5 hover:text-[#1a8a7d]" : ""}
                 ${past ? "text-gray-300 cursor-not-allowed" : "cursor-pointer"}
               `}
             >
@@ -197,6 +217,15 @@ export default function DynamicBooking({ slug }: { slug: string }) {
   }, [adults, effectiveChildren, activeAdultPrice, activeChildPrice]);
 
   const daysLabel = days === "3d2n" ? "三天兩夜" : "四天三夜";
+  const tripDaysCount = days === "3d2n" ? 3 : 4;
+
+  // Compute return date from selected departure date
+  const returnDate = useMemo(() => {
+    if (!selectedDate) return null;
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + tripDaysCount - 1);
+    return d;
+  }, [selectedDate, tripDaysCount]);
 
   // Display title: standard template uses special title
   const pageTitle = template?.isStandard
@@ -397,13 +426,21 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">出團日期</span>
+                <span className="text-gray-500">出發日期</span>
                 <span className="font-bold text-gray-800">
                   {template.customDate && selectedDate
                     ? formatSelectedDate(selectedDate)
                     : template.tripDate}
                 </span>
               </div>
+              {template.customDate && selectedDate && returnDate && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">回程日期</span>
+                  <span className="font-bold text-gray-800">
+                    {formatSelectedDate(returnDate)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">{template.hasChildPrice ? "成人人數" : "人數"}</span>
                 <span className="font-bold text-gray-800">{adults} 人</span>
@@ -595,10 +632,18 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                     <BookingCalendar
                       selectedDate={selectedDate}
                       onSelectDate={setSelectedDate}
+                      tripDays={tripDaysCount}
                     />
-                    {selectedDate && (
-                      <div className="px-4 py-2.5 rounded-xl bg-[#1a8a7d]/5 border-2 border-[#1a8a7d] text-[#1a8a7d] font-bold text-sm md:text-base">
-                        已選擇：{formatSelectedDate(selectedDate)}
+                    {selectedDate && returnDate && (
+                      <div className="px-4 py-3 rounded-xl bg-[#1a8a7d]/5 border-2 border-[#1a8a7d] space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#1a8a7d]/70 font-medium">出發日期</span>
+                          <span className="text-[#1a8a7d] font-bold">{formatSelectedDate(selectedDate)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#1a8a7d]/70 font-medium">回程日期</span>
+                          <span className="text-[#1a8a7d] font-bold">{formatSelectedDate(returnDate)}</span>
+                        </div>
                       </div>
                     )}
                   </div>
