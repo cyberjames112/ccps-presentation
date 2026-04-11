@@ -41,6 +41,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [days, setDays] = useState<"3d2n" | "4d3n">("3d2n");
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -51,14 +52,32 @@ export default function DynamicBooking({ slug }: { slug: string }) {
 
   const template = templateQuery.data;
 
+  // Determine active prices based on day selection
+  const activeAdultPrice = template
+    ? (template.showDaySelector && days === "4d3n" && template.adultPrice4d != null
+        ? template.adultPrice4d
+        : template.adultPrice)
+    : 0;
+  const activeChildPrice = template
+    ? (template.showDaySelector && days === "4d3n" && template.childPrice4d != null
+        ? template.childPrice4d
+        : template.childPrice)
+    : 0;
+
   const pricing = useMemo(() => {
-    if (!template) return { adultTotal: 0, childTotal: 0, totalPrice: 0, totalPeople: 0 };
-    const adultTotal = adults * template.adultPrice;
-    const childTotal = children * template.childPrice;
+    const adultTotal = adults * activeAdultPrice;
+    const childTotal = children * activeChildPrice;
     const totalPrice = adultTotal + childTotal;
     const totalPeople = adults + children;
     return { adultTotal, childTotal, totalPrice, totalPeople };
-  }, [adults, children, template]);
+  }, [adults, children, activeAdultPrice, activeChildPrice]);
+
+  const daysLabel = days === "3d2n" ? "三天兩夜" : "四天三夜";
+
+  // Display title: standard template uses special title
+  const pageTitle = template?.isStandard
+    ? "CCPS客制化考察行程費用試算"
+    : template?.name ?? "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +88,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
         name,
         phone,
         email,
-        tripDays: "3d2n", // placeholder, kept for backwards compat
+        tripDays: days,
         tripDate: template.tripDate,
         groupSize: adults + children,
         totalAmount: pricing.totalPrice,
@@ -245,7 +264,9 @@ export default function DynamicBooking({ slug }: { slug: string }) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">行程</span>
-                <span className="font-bold text-gray-800">{template.name}</span>
+                <span className="font-bold text-gray-800">
+                  {template.showDaySelector ? daysLabel : template.name}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">出團日期</span>
@@ -311,11 +332,16 @@ export default function DynamicBooking({ slug }: { slug: string }) {
             className="mb-6 md:mb-8"
           >
             <h1 className="text-2xl md:text-4xl font-black text-[#1a8a7d]">
-              {template.name}
+              {pageTitle}
             </h1>
-            {template.description && (
+            {!template.isStandard && template.description && template.description !== "標準模式" && (
               <p className="mt-1.5 text-sm md:text-base text-gray-500">
                 {template.description}
+              </p>
+            )}
+            {template.isStandard && (
+              <p className="mt-1.5 text-sm md:text-base text-gray-500">
+                填寫以下資料，我們將盡快為您安排專屬行程
               </p>
             )}
           </motion.div>
@@ -377,20 +403,53 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 />
               </div>
 
-              {/* Trip Info */}
+              {/* Trip Info / Day Selector */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Clock className="w-4 h-4 text-[#1a8a7d]" />
                   行程方案
                 </label>
-                <div className="px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]">
-                  <p className="font-bold text-sm md:text-base">{template.name}</p>
-                  {template.description && (
-                    <p className="text-xs font-normal mt-0.5 opacity-70">
-                      {template.description}
-                    </p>
-                  )}
-                </div>
+                {template.showDaySelector ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDays("3d2n")}
+                      className={`px-4 py-3 rounded-xl border-2 text-center transition-all ${
+                        days === "3d2n"
+                          ? "border-[#1a8a7d] bg-[#1a8a7d]/10 text-[#1a8a7d]"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      <p className="font-bold text-sm md:text-base">三天兩夜</p>
+                      <p className="text-xs mt-0.5 opacity-70">
+                        成人 NT${template.adultPrice.toLocaleString()}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDays("4d3n")}
+                      className={`px-4 py-3 rounded-xl border-2 text-center transition-all ${
+                        days === "4d3n"
+                          ? "border-[#1a8a7d] bg-[#1a8a7d]/10 text-[#1a8a7d]"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      <p className="font-bold text-sm md:text-base">四天三夜</p>
+                      <p className="text-xs mt-0.5 opacity-70">
+                        成人 NT${(template.adultPrice4d ?? template.adultPrice).toLocaleString()}
+                      </p>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]">
+                    <p className="font-bold text-sm md:text-base">{template.name}</p>
+                    {template.description && template.description !== "標準模式" && (
+                      <p className="text-xs font-normal mt-0.5 opacity-70">
+                        {template.description}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Date */}
@@ -409,7 +468,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#1a8a7d]" />
                   成人人數 <span className="text-red-500">*</span>
-                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${template.adultPrice.toLocaleString()}</span>
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${activeAdultPrice.toLocaleString()}</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -440,7 +499,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#d4a843]" />
                   未滿11歲兒童人數
-                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${template.childPrice.toLocaleString()}</span>
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${activeChildPrice.toLocaleString()}</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -492,9 +551,15 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                     <h3 className="text-white font-bold text-sm">費用明細</h3>
                   </div>
                   <div className="p-5 space-y-3">
+                    {template.showDaySelector && (
+                      <div className="flex justify-between text-sm border-b border-gray-100 pb-2 mb-1">
+                        <span className="text-gray-500">方案</span>
+                        <span className="font-bold text-[#1a8a7d]">{daysLabel}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">成人（每位）</span>
-                      <span className="font-bold">NT${template.adultPrice.toLocaleString()}</span>
+                      <span className="font-bold">NT${activeAdultPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">成人人數</span>
@@ -507,7 +572,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
 
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">兒童（未滿11歲，每位）</span>
-                      <span className="font-bold">NT${template.childPrice.toLocaleString()}</span>
+                      <span className="font-bold">NT${activeChildPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">兒童人數</span>

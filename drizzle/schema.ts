@@ -35,8 +35,12 @@ export const tripTemplates = pgTable("trip_templates", {
   name: varchar("name", { length: 200 }).notNull(), // 方案名稱
   description: text("description"), // 方案描述
   tripDate: varchar("trip_date", { length: 50 }).notNull(), // 出團日期顯示文字
-  adultPrice: integer("adult_price").notNull(), // 成人價格
-  childPrice: integer("child_price").notNull(), // 兒童價格
+  isStandard: boolean("is_standard").default(false).notNull(), // 標準方案（顯示特殊標題）
+  showDaySelector: boolean("show_day_selector").default(false).notNull(), // 標準模式（顯示天數選擇）
+  adultPrice: integer("adult_price").notNull(), // 成人價格（或3天2夜價格）
+  childPrice: integer("child_price").notNull(), // 兒童價格（或3天2夜價格）
+  adultPrice4d: integer("adult_price_4d"), // 4天3夜成人價格
+  childPrice4d: integer("child_price_4d"), // 4天3夜兒童價格
   active: boolean("active").default(true).notNull(), // 是否啟用
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

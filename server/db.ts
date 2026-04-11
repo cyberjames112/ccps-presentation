@@ -74,11 +74,29 @@ export async function runAutoMigration() {
         name VARCHAR(200) NOT NULL,
         description TEXT,
         trip_date VARCHAR(50) NOT NULL,
+        is_standard BOOLEAN NOT NULL DEFAULT false,
+        show_day_selector BOOLEAN NOT NULL DEFAULT false,
         adult_price INTEGER NOT NULL,
         child_price INTEGER NOT NULL,
+        adult_price_4d INTEGER,
+        child_price_4d INTEGER,
         active BOOLEAN NOT NULL DEFAULT true,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
+    `);
+
+    // Add new columns to existing trip_templates
+    await db.execute(sql`
+      ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS is_standard BOOLEAN NOT NULL DEFAULT false;
+    `);
+    await db.execute(sql`
+      ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS show_day_selector BOOLEAN NOT NULL DEFAULT false;
+    `);
+    await db.execute(sql`
+      ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS adult_price_4d INTEGER;
+    `);
+    await db.execute(sql`
+      ALTER TABLE trip_templates ADD COLUMN IF NOT EXISTS child_price_4d INTEGER;
     `);
 
     _migrated = true;

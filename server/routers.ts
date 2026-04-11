@@ -27,8 +27,12 @@ export const appRouter = router({
           name: z.string().min(1, "方案名稱為必填"),
           description: z.string().optional(),
           tripDate: z.string().min(1, "出團日期為必填"),
+          isStandard: z.boolean().default(false),
+          showDaySelector: z.boolean().default(false),
           adultPrice: z.number().int().min(0),
           childPrice: z.number().int().min(0),
+          adultPrice4d: z.number().int().min(0).optional(),
+          childPrice4d: z.number().int().min(0).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -38,8 +42,12 @@ export const appRouter = router({
           name: input.name,
           description: input.description ?? null,
           tripDate: input.tripDate,
+          isStandard: input.isStandard,
+          showDaySelector: input.showDaySelector,
           adultPrice: input.adultPrice,
           childPrice: input.childPrice,
+          adultPrice4d: input.adultPrice4d ?? null,
+          childPrice4d: input.childPrice4d ?? null,
         });
         return template;
       }),
@@ -63,8 +71,12 @@ export const appRouter = router({
           name: z.string().min(1).optional(),
           description: z.string().optional(),
           tripDate: z.string().optional(),
+          isStandard: z.boolean().optional(),
+          showDaySelector: z.boolean().optional(),
           adultPrice: z.number().int().min(0).optional(),
           childPrice: z.number().int().min(0).optional(),
+          adultPrice4d: z.number().int().min(0).nullable().optional(),
+          childPrice4d: z.number().int().min(0).nullable().optional(),
           active: z.boolean().optional(),
         })
       )
