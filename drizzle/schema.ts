@@ -38,7 +38,8 @@ export const tripTemplates = pgTable("trip_templates", {
   isStandard: boolean("is_standard").default(false).notNull(), // 標準方案（顯示特殊標題）
   showDaySelector: boolean("show_day_selector").default(false).notNull(), // 標準模式（顯示天數選擇）
   customDate: boolean("custom_date").default(false).notNull(), // 由使用者自選出發日期
-  adultPrice: integer("adult_price").notNull(), // 成人價格（或3天2夜價格）
+  hasChildPrice: boolean("has_child_price").default(true).notNull(), // 是否有兒童優惠價
+  adultPrice: integer("adult_price").notNull(), // 考察團費用（或3天2夜價格）
   childPrice: integer("child_price").notNull(), // 兒童價格（或3天2夜價格）
   adultPrice4d: integer("adult_price_4d"), // 4天3夜成人價格
   childPrice4d: integer("child_price_4d"), // 4天3夜兒童價格

@@ -216,6 +216,7 @@ export default function Admin() {
   const [tripDate, setTripDate] = useState("");
   const [adultPrice, setAdultPrice] = useState(30000);
   const [childPrice, setChildPrice] = useState(20000);
+  const [hasChildPrice, setHasChildPrice] = useState(false);
   const [adultPrice4d, setAdultPrice4d] = useState(25000);
   const [childPrice4d, setChildPrice4d] = useState(18000);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
@@ -235,6 +236,7 @@ export default function Admin() {
     setCustomDesc("");
     setDateMode("preset");
     setTripDate("");
+    setHasChildPrice(false);
     setAdultPrice(30000);
     setChildPrice(20000);
     setAdultPrice4d(25000);
@@ -252,8 +254,9 @@ export default function Admin() {
       isStandard,
       showDaySelector,
       customDate: isCustomDate,
+      hasChildPrice,
       adultPrice,
-      childPrice,
+      childPrice: hasChildPrice ? childPrice : 0,
       adultPrice4d: showDaySelector ? adultPrice4d : undefined,
       childPrice4d: showDaySelector ? childPrice4d : undefined,
     });
@@ -452,13 +455,28 @@ export default function Admin() {
                 <label className="block text-sm font-bold text-gray-700 mb-3">
                   費用設定
                 </label>
+
+                {/* 兒童優惠 checkbox */}
+                <label className="flex items-center gap-2 mb-4 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={hasChildPrice}
+                    onChange={(e) => setHasChildPrice(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-[#1a8a7d] focus:ring-[#1a8a7d]"
+                  />
+                  <span className="text-sm text-gray-700 font-medium">兒童優惠價格</span>
+                  <span className="text-xs text-gray-400">（勾選後可設定兒童價格）</span>
+                </label>
+
                 {showDaySelector ? (
                   <div className="space-y-4">
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <p className="text-xs font-bold text-gray-500 mb-3">三天兩夜方案</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className={`grid gap-3 ${hasChildPrice ? "grid-cols-2" : "grid-cols-1"}`}>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">成人價格 (NT$)</label>
+                          <label className="block text-xs text-gray-500 mb-1">
+                            {hasChildPrice ? "成人價格" : "考察團費用"} (NT$)
+                          </label>
                           <input
                             type="number"
                             min={0}
@@ -467,23 +485,27 @@ export default function Admin() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
                           />
                         </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={childPrice}
-                            onChange={(e) => setChildPrice(Number(e.target.value))}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
-                          />
-                        </div>
+                        {hasChildPrice && (
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={childPrice}
+                              onChange={(e) => setChildPrice(Number(e.target.value))}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <p className="text-xs font-bold text-gray-500 mb-3">四天三夜方案</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className={`grid gap-3 ${hasChildPrice ? "grid-cols-2" : "grid-cols-1"}`}>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">成人價格 (NT$)</label>
+                          <label className="block text-xs text-gray-500 mb-1">
+                            {hasChildPrice ? "成人價格" : "考察團費用"} (NT$)
+                          </label>
                           <input
                             type="number"
                             min={0}
@@ -492,23 +514,27 @@ export default function Admin() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
                           />
                         </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={childPrice4d}
-                            onChange={(e) => setChildPrice4d(Number(e.target.value))}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
-                          />
-                        </div>
+                        {hasChildPrice && (
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={childPrice4d}
+                              onChange={(e) => setChildPrice4d(Number(e.target.value))}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 gap-4 ${hasChildPrice ? "md:grid-cols-2" : ""}`}>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">成人價格 (NT$)</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {hasChildPrice ? "成人價格" : "考察團費用"} (NT$)
+                      </label>
                       <input
                         type="number"
                         min={0}
@@ -517,16 +543,18 @@ export default function Admin() {
                         className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={childPrice}
-                        onChange={(e) => setChildPrice(Number(e.target.value))}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
-                      />
-                    </div>
+                    {hasChildPrice && (
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">兒童價格 (NT$)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={childPrice}
+                          onChange={(e) => setChildPrice(Number(e.target.value))}
+                          className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-[#1a8a7d] focus:ring-2 focus:ring-[#1a8a7d]/20 outline-none text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

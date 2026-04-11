@@ -186,13 +186,15 @@ export default function DynamicBooking({ slug }: { slug: string }) {
         : template.childPrice)
     : 0;
 
+  const effectiveChildren = template?.hasChildPrice ? children : 0;
+
   const pricing = useMemo(() => {
     const adultTotal = adults * activeAdultPrice;
-    const childTotal = children * activeChildPrice;
+    const childTotal = effectiveChildren * activeChildPrice;
     const totalPrice = adultTotal + childTotal;
-    const totalPeople = adults + children;
+    const totalPeople = adults + effectiveChildren;
     return { adultTotal, childTotal, totalPrice, totalPeople };
-  }, [adults, children, activeAdultPrice, activeChildPrice]);
+  }, [adults, effectiveChildren, activeAdultPrice, activeChildPrice]);
 
   const daysLabel = days === "3d2n" ? "三天兩夜" : "四天三夜";
 
@@ -216,7 +218,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
         email,
         tripDays: days,
         tripDate: tripDateStr,
-        groupSize: adults + children,
+        groupSize: adults + effectiveChildren,
         totalAmount: pricing.totalPrice,
         templateSlug: slug,
       });
@@ -403,10 +405,10 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">成人人數</span>
+                <span className="text-gray-500">{template.hasChildPrice ? "成人人數" : "人數"}</span>
                 <span className="font-bold text-gray-800">{adults} 人</span>
               </div>
-              {children > 0 && (
+              {template.hasChildPrice && children > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">兒童人數（未滿11歲）</span>
                   <span className="font-bold text-gray-800">{children} 人</span>
@@ -552,7 +554,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                     >
                       <p className="font-bold text-sm md:text-base">三天兩夜</p>
                       <p className="text-xs mt-0.5 opacity-70">
-                        成人 NT${template.adultPrice.toLocaleString()}
+                        {template.hasChildPrice ? "成人" : "每位"} NT${template.adultPrice.toLocaleString()}
                       </p>
                     </button>
                     <button
@@ -566,7 +568,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                     >
                       <p className="font-bold text-sm md:text-base">四天三夜</p>
                       <p className="text-xs mt-0.5 opacity-70">
-                        成人 NT${(template.adultPrice4d ?? template.adultPrice).toLocaleString()}
+                        {template.hasChildPrice ? "成人" : "每位"} NT${(template.adultPrice4d ?? template.adultPrice).toLocaleString()}
                       </p>
                     </button>
                   </div>
@@ -611,7 +613,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#1a8a7d]" />
-                  成人人數 <span className="text-red-500">*</span>
+                  {template.hasChildPrice ? "成人人數" : "人數"} <span className="text-red-500">*</span>
                   <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${activeAdultPrice.toLocaleString()}</span>
                 </label>
                 <div className="flex items-center gap-4">
@@ -638,7 +640,8 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                 </div>
               </div>
 
-              {/* Children */}
+              {/* Children — only show when hasChildPrice */}
+              {template.hasChildPrice && (
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#d4a843]" />
@@ -668,6 +671,7 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                   </button>
                 </div>
               </div>
+              )}
 
               {/* Submit (mobile) */}
               <div className="lg:hidden pt-2">
@@ -702,31 +706,37 @@ export default function DynamicBooking({ slug }: { slug: string }) {
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">成人（每位）</span>
+                      <span className="text-gray-500">{template.hasChildPrice ? "成人（每位）" : "考察團費用（每位）"}</span>
                       <span className="font-bold">NT${activeAdultPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">成人人數</span>
+                      <span className="text-gray-500">{template.hasChildPrice ? "成人人數" : "人數"}</span>
                       <span className="font-bold">× {adults} 人</span>
                     </div>
-                    <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
-                      <span className="text-gray-600 font-medium">成人小計</span>
-                      <span className="font-bold">NT${pricing.adultTotal.toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">兒童（未滿11歲，每位）</span>
-                      <span className="font-bold">NT${activeChildPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">兒童人數</span>
-                      <span className="font-bold">× {children} 人</span>
-                    </div>
-                    {children > 0 && (
+                    {template.hasChildPrice && (
                       <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
-                        <span className="text-gray-600 font-medium">兒童小計</span>
-                        <span className="font-bold">NT${pricing.childTotal.toLocaleString()}</span>
+                        <span className="text-gray-600 font-medium">成人小計</span>
+                        <span className="font-bold">NT${pricing.adultTotal.toLocaleString()}</span>
                       </div>
+                    )}
+
+                    {template.hasChildPrice && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">兒童（未滿11歲，每位）</span>
+                          <span className="font-bold">NT${activeChildPrice.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">兒童人數</span>
+                          <span className="font-bold">× {children} 人</span>
+                        </div>
+                        {children > 0 && (
+                          <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
+                            <span className="text-gray-600 font-medium">兒童小計</span>
+                            <span className="font-bold">NT${pricing.childTotal.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     <div className="border-t-2 border-[#1a8a7d]/20 pt-3">
