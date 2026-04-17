@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
   Plane,
@@ -17,13 +16,14 @@ import {
   CheckCircle2,
   X,
   MessageCircle,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663123178525/fDCYNs6656b7JMsC7bMdFf/logo_ec5529c5.png";
 
-const ADULT_PRICE = 30000;
-const CHILD_PRICE = 20000;
 const LINE_URL = "https://line.me/ti/p/~0936669147";
 
 const includes = [
@@ -33,19 +33,157 @@ const includes = [
   { icon: Car, text: "吉隆坡導覽全程專車接送" },
 ];
 
-type DayOption = "3d2n" | "4d3n";
+// ── Booking Calendar Component ──
+function BookingCalendar({
+  selectedDate,
+  onSelectDate,
+  tripDays = 1,
+}: {
+  selectedDate: Date | null;
+  onSelectDate: (d: Date) => void;
+  tripDays?: number;
+}) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
-export default function Booking() {
-  // Scroll to top on mount
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(firstDayOfWeek).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    week.push(d);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  }
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null);
+    weeks.push(week);
+  }
+
+  // Build a set of timestamps for the trip range (selectedDate ~ selectedDate + tripDays-1)
+  const rangeSet = useMemo(() => {
+    const s = new Set<string>();
+    if (!selectedDate || tripDays <= 0) return s;
+    for (let i = 0; i < tripDays; i++) {
+      const d = new Date(selectedDate);
+      d.setDate(d.getDate() + i);
+      s.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+    return s;
+  }, [selectedDate, tripDays]);
+
+  const isStart = (day: number) => {
+    if (!selectedDate) return false;
+    return (
+      selectedDate.getFullYear() === year &&
+      selectedDate.getMonth() === month &&
+      selectedDate.getDate() === day
+    );
+  };
+
+  const isInRange = (day: number) => {
+    return rangeSet.has(`${year}-${month}-${day}`);
+  };
+
+  const isPast = (day: number) => {
+    const d = new Date(year, month, day);
+    return d < today;
+  };
+
+  const isToday = (day: number) => {
+    return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+  };
+
+  const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+  const monthLabel = `${year} 年 ${month + 1} 月`;
+
+  return (
+    <div className="bg-white border-2 border-[#1a8a7d]/20 rounded-xl p-4 select-none">
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={() => setViewMonth(new Date(year, month - 1, 1))}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        </button>
+        <span className="text-sm font-bold text-gray-800">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={() => setViewMonth(new Date(year, month + 1, 1))}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {weekDays.map((d) => (
+          <div key={d} className="text-center text-xs font-bold text-gray-400 py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {weeks.flat().map((day, i) => {
+          if (day === null) return <div key={i} />;
+          const start = isStart(day);
+          const inRange = !start && isInRange(day);
+          const past = isPast(day);
+          const todayMark = isToday(day);
+
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={past}
+              onClick={() => onSelectDate(new Date(year, month, day))}
+              className={`w-full aspect-square rounded-lg text-sm font-bold flex items-center justify-center transition-all
+                ${start ? "bg-[#1a8a7d] text-white shadow-md" : ""}
+                ${inRange ? "bg-[#1a8a7d]/20 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
+                ${!start && !inRange && todayMark ? "bg-[#1a8a7d]/10 text-[#1a8a7d] ring-1 ring-[#1a8a7d]/30" : ""}
+                ${!start && !inRange && !todayMark && !past ? "text-gray-700 hover:bg-[#1a8a7d]/5 hover:text-[#1a8a7d]" : ""}
+                ${past ? "text-gray-300 cursor-not-allowed" : "cursor-pointer"}
+              `}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Helper: format selected date ──
+function formatSelectedDate(d: Date): string {
+  const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}(${weekDays[d.getDay()]})`;
+}
+
+export default function DynamicBooking({ slug }: { slug: string }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
+  const templateQuery = trpc.tripTemplate.getBySlug.useQuery({ slug });
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [days, setDays] = useState<DayOption>("3d2n");
-  const [date] = useState("4/29(四)-5/3(一)");
+  const [days, setDays] = useState<"3d2n" | "4d3n">("3d2n");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -54,40 +192,73 @@ export default function Booking() {
 
   const createBooking = trpc.booking.create.useMutation();
 
-  // Price calculation
+  const template = templateQuery.data;
+
+  // Determine active prices based on day selection
+  const activeAdultPrice = template
+    ? (template.showDaySelector && days === "4d3n" && template.adultPrice4d != null
+        ? template.adultPrice4d
+        : template.adultPrice)
+    : 0;
+  const activeChildPrice = template
+    ? (template.showDaySelector && days === "4d3n" && template.childPrice4d != null
+        ? template.childPrice4d
+        : template.childPrice)
+    : 0;
+
+  const effectiveChildren = template?.hasChildPrice ? children : 0;
+
   const pricing = useMemo(() => {
-    const totalPeople = adults + children;
-    const adultTotal = adults * ADULT_PRICE;
-    const childTotal = children * CHILD_PRICE;
+    const adultTotal = adults * activeAdultPrice;
+    const childTotal = effectiveChildren * activeChildPrice;
     const totalPrice = adultTotal + childTotal;
+    const totalPeople = adults + effectiveChildren;
     return { adultTotal, childTotal, totalPrice, totalPeople };
-  }, [adults, children]);
+  }, [adults, effectiveChildren, activeAdultPrice, activeChildPrice]);
+
+  const daysLabel = days === "3d2n" ? "三天兩夜" : "四天三夜";
+  const tripDaysCount = days === "3d2n" ? 3 : 4;
+
+  // Compute return date from selected departure date
+  const returnDate = useMemo(() => {
+    if (!selectedDate) return null;
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + tripDaysCount - 1);
+    return d;
+  }, [selectedDate, tripDaysCount]);
+
+  // Display title: standard template uses special title
+  const pageTitle = template?.isStandard
+    ? "CCPS客制化考察行程費用試算"
+    : template?.name ?? "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !email || isSubmitting) return;
+    if (!name || !phone || !email || isSubmitting || !template) return;
+    if (template.customDate && !selectedDate) return; // must pick a date
     setIsSubmitting(true);
+    const tripDateStr = template.customDate && selectedDate
+      ? formatSelectedDate(selectedDate)
+      : template.tripDate;
     try {
       await createBooking.mutateAsync({
         name,
         phone,
         email,
         tripDays: days,
-        tripDate: date || undefined,
-        groupSize: adults + children,
+        tripDate: tripDateStr,
+        groupSize: adults + effectiveChildren,
         totalAmount: pricing.totalPrice,
+        templateSlug: slug,
       });
       setSubmitted(true);
     } catch (err) {
       console.error("Booking failed:", err);
-      // Still show success to user (data might have been saved)
       setSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const daysLabel = "五天四夜";
 
   const handleLineClick = () => {
     setShowLinePrompt(true);
@@ -97,6 +268,44 @@ export default function Booking() {
     setShowLinePrompt(false);
     window.open(LINE_URL, "_blank", "noopener,noreferrer");
   };
+
+  // Loading state
+  if (templateQuery.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] via-white to-[#fdf8ed] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-[#1a8a7d] animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">載入行程資料中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error / not found
+  if (templateQuery.error || !template) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] via-white to-[#fdf8ed] flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">找不到此行程方案</h2>
+          <p className="text-gray-500 text-sm">此連結可能已失效或不存在，請聯繫我們取得最新資訊。</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Inactive template
+  if (!template.active) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#f0faf8] via-white to-[#fdf8ed] flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">此行程已結束報名</h2>
+          <p className="text-gray-500 text-sm">感謝您的關注，請聯繫我們了解最新行程。</p>
+        </div>
+      </div>
+    );
+  }
 
   // LINE Prompt Modal
   const LinePromptModal = () => (
@@ -108,7 +317,6 @@ export default function Booking() {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center px-4"
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -116,8 +324,6 @@ export default function Booking() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowLinePrompt(false)}
           />
-
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -125,7 +331,6 @@ export default function Booking() {
             transition={{ type: "spring", duration: 0.5 }}
             className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
           >
-            {/* Green header */}
             <div className="bg-[#06C755] px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
@@ -140,8 +345,6 @@ export default function Booking() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Content */}
             <div className="px-6 py-6">
               <div className="flex items-start gap-3 mb-5">
                 <div className="w-10 h-10 bg-[#06C755]/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -158,7 +361,6 @@ export default function Booking() {
                   </div>
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowLinePrompt(false)}
@@ -219,17 +421,31 @@ export default function Booking() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">行程</span>
-                <span className="font-bold text-gray-800">{daysLabel}</span>
+                <span className="font-bold text-gray-800">
+                  {template.showDaySelector ? daysLabel : template.name}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">出團日期</span>
-                <span className="font-bold text-gray-800">4/29(四) － 5/3(一)</span>
+                <span className="text-gray-500">出發日期</span>
+                <span className="font-bold text-gray-800">
+                  {template.customDate && selectedDate
+                    ? formatSelectedDate(selectedDate)
+                    : template.tripDate}
+                </span>
               </div>
+              {template.customDate && selectedDate && returnDate && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">回程日期</span>
+                  <span className="font-bold text-gray-800">
+                    {formatSelectedDate(returnDate)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">成人人數</span>
+                <span className="text-gray-500">{template.hasChildPrice ? "成人人數" : "人數"}</span>
                 <span className="font-bold text-gray-800">{adults} 人</span>
               </div>
-              {children > 0 && (
+              {template.hasChildPrice && children > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">兒童人數（未滿11歲）</span>
                   <span className="font-bold text-gray-800">{children} 人</span>
@@ -285,11 +501,18 @@ export default function Booking() {
             className="mb-6 md:mb-8"
           >
             <h1 className="text-2xl md:text-4xl font-black text-[#1a8a7d]">
-              馬來西亞考察團報名
+              {pageTitle}
             </h1>
-            <p className="mt-1.5 text-sm md:text-base text-gray-500">
-              填寫以下資料，我們將盡快為您安排專屬行程
-            </p>
+            {!template.isStandard && template.description && template.description !== "標準模式" && (
+              <p className="mt-1.5 text-sm md:text-base text-gray-500">
+                {template.description}
+              </p>
+            )}
+            {template.isStandard && (
+              <p className="mt-1.5 text-sm md:text-base text-gray-500">
+                填寫以下資料，我們將盡快為您安排專屬行程
+              </p>
+            )}
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
@@ -349,37 +572,94 @@ export default function Booking() {
                 />
               </div>
 
-              {/* Days */}
+              {/* Trip Info / Day Selector */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Clock className="w-4 h-4 text-[#1a8a7d]" />
                   行程方案
                 </label>
-                <div className="px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]">
-                  <p className="font-bold text-sm md:text-base">精選超值行程五天四夜</p>
-                  <p className="text-xs font-normal mt-0.5 opacity-70">
-                    吉隆坡導覽＋國際學校參觀＋建案參觀
-                  </p>
-                </div>
+                {template.showDaySelector ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDays("3d2n")}
+                      className={`px-4 py-3 rounded-xl border-2 text-center transition-all ${
+                        days === "3d2n"
+                          ? "border-[#1a8a7d] bg-[#1a8a7d]/10 text-[#1a8a7d]"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      <p className="font-bold text-sm md:text-base">三天兩夜</p>
+                      <p className="text-xs mt-0.5 opacity-70">
+                        {template.hasChildPrice ? "成人" : "每位"} NT${template.adultPrice.toLocaleString()}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDays("4d3n")}
+                      className={`px-4 py-3 rounded-xl border-2 text-center transition-all ${
+                        days === "4d3n"
+                          ? "border-[#1a8a7d] bg-[#1a8a7d]/10 text-[#1a8a7d]"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      }`}
+                    >
+                      <p className="font-bold text-sm md:text-base">四天三夜</p>
+                      <p className="text-xs mt-0.5 opacity-70">
+                        {template.hasChildPrice ? "成人" : "每位"} NT${(template.adultPrice4d ?? template.adultPrice).toLocaleString()}
+                      </p>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d]">
+                    <p className="font-bold text-sm md:text-base">{template.name}</p>
+                    {template.description && template.description !== "標準模式" && (
+                      <p className="text-xs font-normal mt-0.5 opacity-70">
+                        {template.description}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Date */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Calendar className="w-4 h-4 text-[#1a8a7d]" />
-                  出團日期
+                  出團日期 {template.customDate && <span className="text-red-500">*</span>}
                 </label>
-                <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
-                  4/29(四) － 5/3(一)
-                </div>
+                {template.customDate ? (
+                  <div className="space-y-2">
+                    <BookingCalendar
+                      selectedDate={selectedDate}
+                      onSelectDate={setSelectedDate}
+                      tripDays={tripDaysCount}
+                    />
+                    {selectedDate && returnDate && (
+                      <div className="px-4 py-3 rounded-xl bg-[#1a8a7d]/5 border-2 border-[#1a8a7d] space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#1a8a7d]/70 font-medium">出發日期</span>
+                          <span className="text-[#1a8a7d] font-bold">{formatSelectedDate(selectedDate)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#1a8a7d]/70 font-medium">回程日期</span>
+                          <span className="text-[#1a8a7d] font-bold">{formatSelectedDate(returnDate)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full px-4 py-3 rounded-xl border-2 border-[#1a8a7d] bg-[#1a8a7d]/5 text-[#1a8a7d] font-bold text-sm md:text-base">
+                    {template.tripDate}
+                  </div>
+                )}
               </div>
 
               {/* Adults */}
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#1a8a7d]" />
-                  成人人數 <span className="text-red-500">*</span>
-                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT$30,000</span>
+                  {template.hasChildPrice ? "成人人數" : "人數"} <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${activeAdultPrice.toLocaleString()}</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -405,12 +685,13 @@ export default function Booking() {
                 </div>
               </div>
 
-              {/* Children */}
+              {/* Children — only show when hasChildPrice */}
+              {template.hasChildPrice && (
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
                   <Users className="w-4 h-4 text-[#d4a843]" />
                   未滿11歲兒童人數
-                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT$20,000</span>
+                  <span className="text-xs font-normal text-gray-400 ml-1">每位 NT${activeChildPrice.toLocaleString()}</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <button
@@ -435,12 +716,13 @@ export default function Booking() {
                   </button>
                 </div>
               </div>
+              )}
 
-              {/* Submit (mobile only, desktop has it in sidebar) */}
+              {/* Submit (mobile) */}
               <div className="lg:hidden pt-2">
                 <button
                   type="submit"
-                  disabled={!name || !phone || !email || isSubmitting}
+                  disabled={!name || !phone || !email || isSubmitting || (template?.customDate && !selectedDate)}
                   className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? "送出中..." : "瞭解行程"}
@@ -448,7 +730,7 @@ export default function Booking() {
               </div>
             </motion.form>
 
-            {/* Sidebar: Price summary */}
+            {/* Sidebar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -462,42 +744,44 @@ export default function Booking() {
                     <h3 className="text-white font-bold text-sm">費用明細</h3>
                   </div>
                   <div className="p-5 space-y-3">
-                    {/* Adult pricing */}
+                    {template.showDaySelector && (
+                      <div className="flex justify-between text-sm border-b border-gray-100 pb-2 mb-1">
+                        <span className="text-gray-500">方案</span>
+                        <span className="font-bold text-[#1a8a7d]">{daysLabel}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">成人（每位）</span>
-                      <span className="font-bold">
-                        NT${ADULT_PRICE.toLocaleString()}
-                      </span>
+                      <span className="text-gray-500">{template.hasChildPrice ? "成人（每位）" : "考察團費用（每位）"}</span>
+                      <span className="font-bold">NT${activeAdultPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">成人人數</span>
+                      <span className="text-gray-500">{template.hasChildPrice ? "成人人數" : "人數"}</span>
                       <span className="font-bold">× {adults} 人</span>
                     </div>
-                    <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
-                      <span className="text-gray-600 font-medium">成人小計</span>
-                      <span className="font-bold">
-                        NT${pricing.adultTotal.toLocaleString()}
-                      </span>
-                    </div>
-
-                    {/* Child pricing */}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">兒童（未滿11歲，每位）</span>
-                      <span className="font-bold">
-                        NT${CHILD_PRICE.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">兒童人數</span>
-                      <span className="font-bold">× {children} 人</span>
-                    </div>
-                    {children > 0 && (
+                    {template.hasChildPrice && (
                       <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
-                        <span className="text-gray-600 font-medium">兒童小計</span>
-                        <span className="font-bold">
-                          NT${pricing.childTotal.toLocaleString()}
-                        </span>
+                        <span className="text-gray-600 font-medium">成人小計</span>
+                        <span className="font-bold">NT${pricing.adultTotal.toLocaleString()}</span>
                       </div>
+                    )}
+
+                    {template.hasChildPrice && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">兒童（未滿11歲，每位）</span>
+                          <span className="font-bold">NT${activeChildPrice.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">兒童人數</span>
+                          <span className="font-bold">× {children} 人</span>
+                        </div>
+                        {children > 0 && (
+                          <div className="flex justify-between text-sm border-b border-gray-100 pb-3">
+                            <span className="text-gray-600 font-medium">兒童小計</span>
+                            <span className="font-bold">NT${pricing.childTotal.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     <div className="border-t-2 border-[#1a8a7d]/20 pt-3">
@@ -515,7 +799,7 @@ export default function Booking() {
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      disabled={!name || !phone || !email || isSubmitting}
+                      disabled={!name || !phone || !email || isSubmitting || (template?.customDate && !selectedDate)}
                       className="w-full bg-[#d4a843] text-white font-black py-3.5 rounded-full text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {isSubmitting ? "送出中..." : "瞭解行程"}
@@ -525,16 +809,12 @@ export default function Booking() {
 
                 {/* Includes */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
-                  <h3 className="text-sm font-bold text-[#1a8a7d] mb-3">
-                    費用包含
-                  </h3>
+                  <h3 className="text-sm font-bold text-[#1a8a7d] mb-3">費用包含</h3>
                   <div className="space-y-2.5">
                     {includes.map((item, i) => (
                       <div key={i} className="flex items-center gap-2.5">
                         <item.icon className="w-4 h-4 text-[#d4a843] flex-shrink-0" />
-                        <span className="text-xs md:text-sm text-gray-700">
-                          {item.text}
-                        </span>
+                        <span className="text-xs md:text-sm text-gray-700">{item.text}</span>
                       </div>
                     ))}
                   </div>
@@ -545,15 +825,11 @@ export default function Booking() {
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="space-y-1.5">
-                      <h4 className="text-xs font-bold text-amber-800">
-                        注意事項
-                      </h4>
+                      <h4 className="text-xs font-bold text-amber-800">注意事項</h4>
                       <ul className="text-xs text-amber-700 space-y-1 leading-relaxed">
                         <li>不含機場接送</li>
                         <li>不含保險，若有需求可自行提前規劃</li>
-                        <li className="font-bold">
-                          機票一經航空公司開票後不得要求退款
-                        </li>
+                        <li className="font-bold">機票一經航空公司開票後不得要求退款</li>
                       </ul>
                     </div>
                   </div>

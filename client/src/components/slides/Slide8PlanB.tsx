@@ -54,7 +54,7 @@ export function Slide8PlanB() {
               </h3>
               <div className="space-y-2 md:space-y-3">
                 <a
-                  href="https://papyrusnk-fxbxoky5.manus.space/"
+                  href="https://papyrus-north-kiara-production.up.railway.app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-start gap-2.5 md:gap-3 bg-white/80 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 shadow-sm border border-gray-100 hover:bg-[#1a8a7d]/10 hover:border-[#1a8a7d]/30 transition-all cursor-pointer group"
@@ -62,6 +62,18 @@ export function Slide8PlanB() {
                   <Building2 className="w-5 h-5 md:w-6 md:h-6 text-[#1a8a7d] flex-shrink-0 mt-0.5" />
                   <p className="text-sm md:text-base text-gray-700 font-medium group-hover:text-[#1a8a7d] transition-colors flex items-center gap-1.5">
                     超高CP值精選建案 — Papyrus North Kiara
+                    <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
+                </a>
+                <a
+                  href="https://golden-crown-residence-production.up.railway.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-2.5 md:gap-3 bg-white/80 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 shadow-sm border border-gray-100 hover:bg-[#d4a843]/10 hover:border-[#d4a843]/30 transition-all cursor-pointer group"
+                >
+                  <Building2 className="w-5 h-5 md:w-6 md:h-6 text-[#d4a843] flex-shrink-0 mt-0.5" />
+                  <p className="text-sm md:text-base text-gray-700 font-medium group-hover:text-[#d4a843] transition-colors flex items-center gap-1.5">
+                    超高CP值精選建案 — Golden Crown Residence
                     <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </p>
                 </a>
@@ -123,15 +135,28 @@ export function Slide8PlanB() {
 
               {/* Secondary CTA - Papyrus建案 */}
               <motion.a
-                href="https://papyrusnk-fxbxoky5.manus.space/"
+                href="https://papyrus-north-kiara-production.up.railway.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="mt-3 w-full flex items-center justify-center gap-2 bg-[#d4a843] text-white font-bold px-6 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all text-sm md:text-base"
+                className="mt-3 w-full flex items-center justify-center gap-2 bg-[#1a8a7d] text-white font-bold px-6 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all text-sm md:text-base"
               >
                 <Building2 className="w-4 h-4 md:w-5 md:h-5" />
-                超高CP值精選建案
+                Papyrus North Kiara
+              </motion.a>
+
+              {/* Tertiary CTA - Golden Crown建案 */}
+              <motion.a
+                href="https://golden-crown-residence-production.up.railway.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="mt-2 w-full flex items-center justify-center gap-2 bg-[#d4a843] text-white font-bold px-6 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all text-sm md:text-base"
+              >
+                <Building2 className="w-4 h-4 md:w-5 md:h-5" />
+                Golden Crown Residence
               </motion.a>
             </div>
           </motion.div>

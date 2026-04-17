@@ -14,6 +14,7 @@ function getResendClient(): Resend | null {
 export type BookingEmailData = {
   name: string;
   phone: string;
+  email: string;
   tripDays: "3d2n" | "4d3n";
   tripDate: string | null;
   groupSize: number;
@@ -74,6 +75,14 @@ function buildEmailHtml(data: BookingEmailData): string {
         </tr>
         <tr>
           <td style="padding:12px 16px;background:#f8fffe;border-bottom:1px solid #e8f5f3;color:#666;font-size:14px;">
+            ✉️ Email
+          </td>
+          <td style="padding:12px 16px;background:#f8fffe;border-bottom:1px solid #e8f5f3;font-size:15px;font-weight:700;color:#333;">
+            ${data.email}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;color:#666;font-size:14px;">
             🗓️ 行程
           </td>
           <td style="padding:12px 16px;background:#f8fffe;border-bottom:1px solid #e8f5f3;font-size:15px;font-weight:700;color:#333;">
@@ -145,7 +154,7 @@ export async function sendBookingNotification(
 
   try {
     const { error } = await resend.emails.send({
-      from: "CCPS 家慶佳業 <onboarding@resend.dev>",
+      from: "CCPS 家慶佳業 <jamespai@mail.ccpsmy.com>",
       to: [NOTIFICATION_EMAIL],
       subject: `【新報名】${data.name} - ${tripLabel} ${data.groupSize}人 ${totalFormatted}`,
       html: buildEmailHtml(data),
